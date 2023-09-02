@@ -160,5 +160,6 @@ dist
 
 uploads/users/*/
 
+!uploads/
 !uploads/users/
 
