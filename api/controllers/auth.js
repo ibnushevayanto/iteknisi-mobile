@@ -57,6 +57,15 @@ exports.simpanUser = async (req, res, next) => {
     const password = req.body.password;
     const telp = req.body.telp || null;
 
+    const isEmailRegistered = await User.findOne({ where: { email } });
+    if (isEmailRegistered) {
+      if (!resultUser) {
+        const error = new Error("Email sudah digunakan");
+        error.statusCode = 422;
+        throw error;
+      }
+    }
+
     const hashedPassword = await bcryptjs.hash(password, 12);
     const user = await User.create({
       email,
