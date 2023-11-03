@@ -4,6 +4,7 @@ import Routes from './routes';
 import store from './store';
 import {Provider} from 'react-redux';
 import Toast from 'react-native-toast-message';
+import {enableLatestRenderer} from 'react-native-maps';
 
 ThemeManager.setComponentTheme('Text', {
   style: {
@@ -11,6 +12,7 @@ ThemeManager.setComponentTheme('Text', {
   },
 });
 
+enableLatestRenderer();
 export default function () {
   return (
     <View useSafeArea flex>

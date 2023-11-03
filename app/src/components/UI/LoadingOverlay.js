@@ -5,7 +5,7 @@ function LoadingOverlay({message}) {
   return (
     <Modal transparent={true} visible={true}>
       <View style={styles.rootContainer}>
-        <ActivityIndicator size="large" color={'#0C0C0F'} />
+        <ActivityIndicator size="large" color={'#695AE0'} />
         <Text style={styles.message}>{message}</Text>
       </View>
     </Modal>

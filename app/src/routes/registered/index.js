@@ -3,9 +3,9 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import DaftarOrderScreen from '../../screens/registered/Order/DaftarOrderScreen';
 import ContactScreen from '../../screens/registered/Contact/ContactScreen';
-import ProfileUserScreen from '../../screens/registered/Profile/ProfileUserScreen';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import BerandaScreen from '../../screens/registered/Beranda/BerandaScreen';
+import profile from './profile';
 
 const Bottom = createBottomTabNavigator();
 
@@ -20,6 +20,16 @@ export default function () {
           tabBarActiveTintColor: '#695AE0',
           tabBarInactiveTintColor: '#0C0B10',
         }}>
+        <Bottom.Screen
+          component={profile}
+          name="Profile"
+          options={{
+            tabBarIcon: ({color, size}) => (
+              <Ionicon name="person" color={color} size={size / 1.3} />
+            ),
+            tabBarLabel: 'Profile',
+          }}
+        />
         <Bottom.Screen
           component={BerandaScreen}
           name="Landing"
@@ -48,16 +58,6 @@ export default function () {
               <Ionicon name="call" color={color} size={size / 1.3} />
             ),
             tabBarLabel: 'Kontak',
-          }}
-        />
-        <Bottom.Screen
-          component={ProfileUserScreen}
-          name="Profile"
-          options={{
-            tabBarIcon: ({color, size}) => (
-              <Ionicon name="person" color={color} size={size / 1.3} />
-            ),
-            tabBarLabel: 'Profile',
           }}
         />
       </Bottom.Navigator>

@@ -21,7 +21,35 @@ export async function reqLogin(payload) {
     return {status: true, message: 'Berhasil melakukan login'};
   } catch (error) {
     const {message} = error?.response?.data || {
-      message: 'Gagal Mendapatkan Data Penugasan',
+      message: 'Gagal melakukan login',
+      status: false,
+    };
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: message,
+    });
+    return {status: false, message};
+  }
+}
+
+export async function reqDaftar(payload) {
+  try {
+    const {data} = await axios.post('user/daftar', payload);
+    await AsyncStorage.setItem('datalogin', JSON.stringify(data));
+    injectStore(data);
+    store.dispatch(SET_DATA_LOGIN(data));
+
+    Toast.show({
+      type: 'success',
+      text1: 'Berhasil',
+      text2: 'Berhasil melakukan login',
+    });
+
+    return {status: true, message: 'Berhasil melakukan login'};
+  } catch (error) {
+    const {message} = error?.response?.data || {
+      message: 'Gagal melakukan login',
       status: false,
     };
     Toast.show({

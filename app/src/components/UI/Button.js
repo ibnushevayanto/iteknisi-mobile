@@ -11,6 +11,7 @@ export default function ({
   containerStyle,
   renderComponent = false,
   isRowContainer = false,
+  small = false,
 }) {
   return (
     <View style={[tailwind`rounded-xl`, {overflow: 'hidden'}]}>
@@ -23,7 +24,7 @@ export default function ({
         onPress={onPress}>
         <View
           style={[
-            tailwind`px-6 py-3 rounded-xl ${
+            tailwind`${small ? 'py-1 px-2' : 'px-6 py-3'}  rounded-xl ${
               isRowContainer ? 'flex-row justify-center items-center' : ''
             }`,
             {backgroundColor: bgColor},
@@ -31,7 +32,13 @@ export default function ({
           {renderComponent ? (
             children
           ) : (
-            <Text style={[textStyle, tailwind`text-center`]}>{children}</Text>
+            <Text
+              style={[
+                textStyle,
+                tailwind`${small ? 'text-xs' : ''} text-center`,
+              ]}>
+              {children}
+            </Text>
           )}
         </View>
       </Pressable>

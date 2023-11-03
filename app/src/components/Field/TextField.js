@@ -26,7 +26,7 @@ export default function ({
         style={[
           tailwind`${
             row ? 'flex-1' : ''
-          } px-2 rounded-lg flex-row items-center`,
+          } px-2 rounded-lg flex-row bg-white items-center`,
           {borderWidth: 1, borderColor: '#ddd'},
         ]}>
         {Prepend && <Prepend />}
