@@ -2,9 +2,13 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const userRoutes = require("./routes/user");
+const path = require("path");
+
+global.__basedir = __dirname;
 
 app.use(bodyParser.json());
 app.use("/user", userRoutes);
+app.use(express.static(path.join(__dirname, "uploads")));
 
 app.use((error, req, res, next) => {
   const status = error?.statusCode || 500;
@@ -33,6 +37,8 @@ MasterMerk.hasMany(Order)
 
 Order.belongsTo(UserAlamat)
 UserAlamat.hasMany(Order)
+
+
 
 // * DB Configuration
 const sequelize = require("./utils/database");

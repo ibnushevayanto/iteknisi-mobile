@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const Usergroup = require("../models/usergroup");
 const fileHelper = require("../utils/file");
 const { Op } = require("sequelize");
+const { joinFileToBaseURL } = require("../utils/index");
 
 exports.login = async (req, res, next) => {
   try {
@@ -15,7 +16,7 @@ exports.login = async (req, res, next) => {
     const password = req.body.password;
     const resultUser = await User.findOne({
       where: { email },
-      include: Usergroup,
+      include: [Usergroup, UserAlamat],
     });
     if (!resultUser) {
       const error = new Error("Email belum terdaftar");
@@ -41,28 +42,24 @@ exports.login = async (req, res, next) => {
       throw error;
     }
 
-    const token = jwt.sign(
-      {
-        email: resultUser.email,
-        nama: resultUser.nama,
-        image: resultUser.image,
-        usergroup_id: resultUser.usergroup.id,
-        usergroup: resultUser.usergroup.usergroup,
-        id: resultUser.id.toString(),
-      },
-      "jwt-token-iteknisi",
-      { expiresIn: "1h" }
-    );
-
-    return res.status(200).json({
-      token,
+    const responseLogin = {
       nama: resultUser.nama,
       email: resultUser.email,
-      image: resultUser.image,
+      image: joinFileToBaseURL(req, resultUser.image),
       usergroup_id: resultUser.usergroup.id,
       usergroup: resultUser.usergroup.usergroup,
-      telp: resultUser.telp
+      telp: resultUser.telp,
+      is_active: resultUser.is_active,
+      alamat: resultUser.users_alamats,
+      id: resultUser.id.toString(),
+    };
+
+    const token = jwt.sign(responseLogin, "jwt-token-iteknisi", {
+      expiresIn: "1h",
     });
+    responseLogin.token = token;
+
+    return res.status(200).json(responseLogin);
   } catch (err) {
     next(err);
   }
@@ -129,8 +126,8 @@ exports.simpanUser = async (req, res, next) => {
 
     const userId = req.user.id;
     const nama = req.body.nama;
-    const email = req.body.email;
     const telp = req.body.telp;
+    const email = req.body.email;
     const alamat = JSON.parse(req.body.alamat);
 
     const isEmailRegistered = await User.findOne({ where: { email } });
@@ -146,11 +143,16 @@ exports.simpanUser = async (req, res, next) => {
 
     if (user) {
       user.nama = nama;
-      user.email = email;
       user.telp = telp;
+      if (user.email !== email) {
+        user.is_active = 0;
+      }
+      user.email = email;
 
       if (req.file) {
-        fileHelper.deleteFile(user.image);
+        if (user.image) {
+          fileHelper.deleteFile(user.image);
+        }
         user.image = req.file.path;
       }
 
@@ -158,12 +160,12 @@ exports.simpanUser = async (req, res, next) => {
 
       for (const itemAlamat of alamat) {
         if (itemAlamat.id) {
-          const dataAlamt = UserAlamat.findByPk(itemAlamat.id);
-          dataAlamt.alamat = itemAlamat.alamat;
-          dataAlamt.latitude = itemAlamat.latitude;
-          dataAlamt.longitude = itemAlamat.longitude;
-          dataAlamt.deskripsi = itemAlamat.deskripsi;
-          dataAlamt.isDefault = +!!itemAlamat.isDefault;
+          const dataAlamat = UserAlamat.findByPk(itemAlamat.id);
+          dataAlamat.alamat = itemAlamat.alamat;
+          dataAlamat.latitude = itemAlamat.latitude;
+          dataAlamat.longitude = itemAlamat.longitude;
+          dataAlamat.deskripsi = itemAlamat.deskripsi;
+          dataAlamat.isDefault = +!!itemAlamat.isDefault;
         } else {
           await UserAlamat.create({
             alamat: itemAlamat.alamat,
@@ -236,7 +238,17 @@ exports.semuaUser = async (req, res, next) => {
 
     const allUser = await User.findAll({
       where: paramsWhere,
+      attributes: ["id", "nama", "email", "telp"],
     });
+
+    for (const itemUser of allUser) {
+      const alamat = await UserAlamat.findOne({
+        where: { userId: itemUser.id, isDefault: 1 },
+        attributes: ["id", "alamat", "deskripsi", "latitude", "longitude"],
+      });
+
+      itemUser.dataValues.alamat = alamat?.dataValues;
+    }
 
     res.json({ message: "Berhasil mendapatkan data", data: allUser });
   } catch (error) {

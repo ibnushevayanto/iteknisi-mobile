@@ -28,6 +28,18 @@ module.exports = sequelize.define("users", {
     type: Sequelize.STRING,
     allowNull: true,
   },
+  image_name: {
+    type: Sequelize.STRING,
+    allowNull: true,
+  },
+  image_type: {
+    type: Sequelize.STRING,
+    allowNull: true,
+  },
+  image_size: {
+    type: Sequelize.STRING,
+    allowNull: true,
+  },
   is_active: {
     type: Sequelize.BOOLEAN,
     allowNull: false,
