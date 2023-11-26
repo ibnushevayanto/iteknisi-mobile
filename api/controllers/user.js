@@ -92,16 +92,30 @@ exports.daftarUser = async (req, res, next) => {
       image: req.file?.path || null,
       is_active: 1,
     });
-    res.status(201).json({
-      message: "User berhasil dibuat",
-      data: {
-        email: user.email,
-        nama: user.nama,
-        telp: user.telp,
-        image: user.image,
-        is_active: user.is_active,
-      },
+
+    const resultUser = await User.findOne({
+      where: { id: user.id },
+      include: [Usergroup, UserAlamat],
     });
+
+    const responseDaftar = {
+      nama: resultUser.nama,
+      email: resultUser.email,
+      image: null,
+      usergroup_id: resultUser.usergroup.id,
+      usergroup: resultUser.usergroup.usergroup,
+      telp: resultUser.telp,
+      is_active: resultUser.is_active,
+      alamat: resultUser.users_alamats,
+      id: resultUser.id.toString(),
+    };
+
+    const token = jwt.sign(responseDaftar, "jwt-token-iteknisi", {
+      expiresIn: "1h",
+    });
+    responseDaftar.token = token;
+
+    return res.status(200).json(responseDaftar);
   } catch (err) {
     next(err);
   }
@@ -114,7 +128,13 @@ exports.profileUser = async (req, res, next) => {
       include: [UserAlamat, Usergroup],
     });
 
-    res.json({ message: "Data ditemukan", data: { ...userData.dataValues } });
+    res.json({
+      message: "Data ditemukan",
+      data: {
+        ...userData.dataValues,
+        image: joinFileToBaseURL(req, userData.dataValues.image),
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -154,18 +174,22 @@ exports.simpanUser = async (req, res, next) => {
           fileHelper.deleteFile(user.image);
         }
         user.image = req.file.path;
+        user.image_name = req.file.originalname;
+        user.image_type = req.file.mimetype;
+        user.image_size = req.file.size;
       }
 
       await user.save();
 
       for (const itemAlamat of alamat) {
         if (itemAlamat.id) {
-          const dataAlamat = UserAlamat.findByPk(itemAlamat.id);
+          const dataAlamat = await UserAlamat.findByPk(itemAlamat.id);
           dataAlamat.alamat = itemAlamat.alamat;
           dataAlamat.latitude = itemAlamat.latitude;
           dataAlamat.longitude = itemAlamat.longitude;
           dataAlamat.deskripsi = itemAlamat.deskripsi;
           dataAlamat.isDefault = +!!itemAlamat.isDefault;
+          await dataAlamat.save();
         } else {
           await UserAlamat.create({
             alamat: itemAlamat.alamat,
@@ -173,6 +197,7 @@ exports.simpanUser = async (req, res, next) => {
             longitude: itemAlamat.longitude,
             deskripsi: itemAlamat.deskripsi,
             isDefault: +!!itemAlamat.isDefault,
+            userId: user.id,
           });
         }
       }
@@ -251,6 +276,35 @@ exports.semuaUser = async (req, res, next) => {
     }
 
     res.json({ message: "Berhasil mendapatkan data", data: allUser });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.ubahKataSandi = async (req, res, next) => {
+  try {
+    validation(req);
+
+    const password_lama = req.body.password_lama;
+    const password_baru = req.body.password_baru;
+    const dataUser = await User.findByPk(req.user.id);
+
+    console.log(dataUser.password);
+    const isPasswordEqual = await bcryptjs.compare(
+      password_lama,
+      dataUser.password
+    );
+    if (!isPasswordEqual) {
+      const error = new Error("Password salah");
+      error.statusCode = 422;
+      throw error;
+    }
+
+    const hashedPassword = await bcryptjs.hash(password_baru, 12);
+    dataUser.password = hashedPassword;
+    await dataUser.save();
+
+    res.json({ message: "Berhasil mengubah kata sandi user" });
   } catch (error) {
     next(error);
   }

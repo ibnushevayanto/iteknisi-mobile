@@ -85,6 +85,14 @@ router.post(
   userController.toggleAktifUser
 );
 
+router.post(
+  "/ubah-kata-sandi",
+  isAuth,
+  body("password_lama").notEmpty().withMessage("masih kosong"),
+  body("password_baru").notEmpty().withMessage("masih kosong"),
+  userController.ubahKataSandi
+);
+
 router.get("/semua", isAuth, userController.semuaUser);
 
 module.exports = router;

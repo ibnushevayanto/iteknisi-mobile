@@ -37,7 +37,7 @@ module.exports = sequelize.define("users", {
     allowNull: true,
   },
   image_size: {
-    type: Sequelize.STRING,
+    type: Sequelize.INTEGER,
     allowNull: true,
   },
   is_active: {
