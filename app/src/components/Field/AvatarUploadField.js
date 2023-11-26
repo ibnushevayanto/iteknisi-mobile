@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text} from 'react-native-ui-lib';
+import {View} from 'react-native-ui-lib';
 import tailwind from 'twrnc';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import {TouchableOpacity} from 'react-native';
@@ -15,15 +15,16 @@ export default function ({value, onChangeValue}) {
       allowMultiSelection: false,
       type: [types.images],
     });
-    console.log(responseDocuments);
-    onChangeValue(responseDocuments);
+    if (responseDocuments.length) {
+      onChangeValue(responseDocuments[0]);
+    }
   };
 
   return (
     <TouchableOpacity
       style={[tailwind`items-center justify-center`, {width: 64, height: 64}]}
       onPress={filePickerHandler}>
-      {value ? (
+      {value?.uri ? (
         <View
           style={[
             tailwind`overflow-hidden rounded-full`,

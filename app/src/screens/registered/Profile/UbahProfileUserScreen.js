@@ -1,18 +1,19 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {TouchableOpacity, ScrollView} from 'react-native';
 import {View, Text} from 'react-native-ui-lib';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import Button from '../../../components/UI/Button';
 import tailwind from 'twrnc';
 import AvatarUploadField from '../../../components/Field/AvatarUploadField';
-import {useSelector} from 'react-redux';
-import {getDataLogin} from '../../../store/public/uiReducer';
 import TextField from '../../../components/Field/TextField';
 import {useIsFocused} from '@react-navigation/native';
 import FormAlamat from '../../../components/Custom/Profile/FormAlamat';
+import Confirmation from '../../../components/UI/Confirmation';
+import {simpanDataUser} from '../../../utils/user';
+import LoadingOverlay from '../../../components/UI/LoadingOverlay';
+import {serialize} from 'object-to-formdata';
 
-export default function ({navigation}) {
-  const datalogin = useSelector(getDataLogin);
+export default function ({navigation, route}) {
   const isFocussed = useIsFocused();
   const [formUser, setFormUser] = useState({
     foto: null,
@@ -22,22 +23,35 @@ export default function ({navigation}) {
   });
   const [alamat, setAlamat] = useState([]);
   const [alamatActive, setAlamatActive] = useState(null);
+  const refFormAlamat = useRef();
+  const refConfirmation = useRef();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isFocussed) {
-      setAlamat(datalogin.alamat);
+      setAlamat(route.params.users_alamats);
       changeValueFormUser([
         {
-          value: datalogin.email,
+          value: route.params.email,
           key: 'email',
         },
         {
-          value: datalogin.nama,
+          value: route.params.nama,
           key: 'nama',
         },
         {
-          value: datalogin.telp,
+          value: route.params.telp,
           key: 'telp',
+        },
+        {
+          value: {
+            fileCopyUri: null,
+            name: route.params.image_name,
+            size: route.params.image_size,
+            type: route.params.image_type,
+            uri: route.params.image,
+          },
+          key: 'foto',
         },
       ]);
     }
@@ -64,13 +78,65 @@ export default function ({navigation}) {
       formAlamat.isDefault = 1;
     }
 
-    if (!formAlamat.id) {
+    if (formAlamat.index !== null && formAlamat.index >= 0) {
+      const currentDataAlamat = [...alamat];
+      const indexAlamat = formAlamat.index;
+      delete formAlamat.index;
+      currentDataAlamat[indexAlamat] = formAlamat;
+      setAlamat(currentDataAlamat);
+    } else {
       setAlamat(prevState => prevState.concat(formAlamat));
     }
   };
 
   return (
     <View flex>
+      {isLoading && <LoadingOverlay />}
+      <Confirmation
+        ref={refConfirmation}
+        onSubmitHandler={async (type, value) => {
+          if (type === 'hapus_data_alamat') {
+            setAlamat(prevState => {
+              const alamatFilter = prevState.filter(
+                (_, indexAlamat) => indexAlamat !== value,
+              );
+
+              if (alamatFilter.length) {
+                const defaultAlamat = alamatFilter.find(
+                  res => !!+res.isDefault,
+                );
+                if (!defaultAlamat) {
+                  alamatFilter[0].isDefault = 1;
+                }
+              }
+
+              return alamatFilter;
+            });
+            refConfirmation.current.toggleModal();
+          } else if (type === 'submit_data') {
+            refConfirmation.current.toggleModal(false);
+
+            setIsLoading(true);
+
+            const payloadFormUser = {...formUser};
+
+            if (!payloadFormUser?.foto?.uri) {
+              delete payloadFormUser.foto;
+            }
+
+            const {status} = await simpanDataUser(
+              serialize({
+                ...payloadFormUser,
+                alamat: JSON.stringify(alamat),
+              }),
+            );
+            setIsLoading(false);
+            if (status) {
+              navigation.navigate('ProfileUser');
+            }
+          }
+        }}
+      />
       <View
         style={[
           tailwind`px-4 py-6 flex-row justify-between items-center`,
@@ -82,12 +148,22 @@ export default function ({navigation}) {
           <Ionicon name="chevron-back" size={28} color={'#ffffff'} />
           <Text style={tailwind`ml-2 text-white text-xl`}>Ubah Profile</Text>
         </TouchableOpacity>
-        <Button bgColor={'#6A5AE0'} textStyle={tailwind`text-white`}>
-          Submmit
+        <Button
+          onPress={() => {
+            refConfirmation.current.setText(
+              'Apakah anda yakin ingin mengirim data ini?',
+            );
+            refConfirmation.current.setName('submit_data');
+            refConfirmation.current.toggleModal();
+          }}
+          bgColor={'#6A5AE0'}
+          textStyle={tailwind`text-white`}>
+          Submit
         </Button>
       </View>
       <ScrollView
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         style={[
           tailwind`flex-1 p-4 rounded-t-lg -mt-2`,
           {backgroundColor: '#F5F6F6'},
@@ -119,12 +195,14 @@ export default function ({navigation}) {
             onChangeText={value => changeValueFormUser(value, 'telp')}
           />
         </View>
+
         <View style={tailwind`mb-8`}>
           <View row style={tailwind`mb-2 items-center justify-between`}>
             <Text>Alamat</Text>
             <FormAlamat
               initialFormValue={alamatActive}
               onSubmit={submitAlamatHandler}
+              ref={refFormAlamat}
             />
           </View>
           {!alamat.length && (
@@ -157,7 +235,16 @@ export default function ({navigation}) {
               <Text style={tailwind`text-xs`}>{itemAlamat.deskripsi}</Text>
 
               <View row style={tailwind`mt-4`}>
-                <TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    setAlamatActive({
+                      ...itemAlamat,
+                      index: idx,
+                      latitude: parseFloat(itemAlamat.latitude),
+                      longitude: parseFloat(itemAlamat.longitude),
+                    });
+                    refFormAlamat.current.toggleVisibleForm(true);
+                  }}>
                   <View row style={tailwind`mr-4`}>
                     <Ionicon
                       size={16}
@@ -166,11 +253,19 @@ export default function ({navigation}) {
                       color="#a7a7a7"
                     />
                     <Text style={[tailwind`text-sm`, {color: '#a7a7a7'}]}>
-                      Edit
+                      Ubah
                     </Text>
                   </View>
                 </TouchableOpacity>
-                <TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    refConfirmation.current.setText(
+                      'Apakah anda yakin ingin menghapus data ini?',
+                    );
+                    refConfirmation.current.setName('hapus_data_alamat');
+                    refConfirmation.current.toggleModal();
+                    refConfirmation.current.setAdditionalValue(idx);
+                  }}>
                   <View row style={tailwind`mr-4`}>
                     <Ionicon
                       size={16}

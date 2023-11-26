@@ -14,6 +14,7 @@ export default function ({
   append: Append,
   onChangeText,
   value,
+  keyboardType,
 }) {
   return (
     <View row={row} style={[tailwind`mb-2`, containerStyle]}>
@@ -36,6 +37,7 @@ export default function ({
           value={value}
           onChangeText={value => onChangeText(value)}
           placeholder={placeholder}
+          keyboardType={keyboardType}
           secureTextEntry={isSecureText}
         />
         {Append && <Append />}

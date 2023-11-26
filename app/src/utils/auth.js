@@ -29,6 +29,7 @@ export async function reqLogin(payload) {
       text1: 'Error',
       text2: message,
     });
+    console.error(error);
     return {status: false, message};
   }
 }
@@ -43,13 +44,13 @@ export async function reqDaftar(payload) {
     Toast.show({
       type: 'success',
       text1: 'Berhasil',
-      text2: 'Berhasil melakukan login',
+      text2: 'Berhasil mendaftarkan user',
     });
 
-    return {status: true, message: 'Berhasil melakukan login'};
+    return {status: true, message: 'Berhasil mendaftarkan user'};
   } catch (error) {
     const {message} = error?.response?.data || {
-      message: 'Gagal melakukan login',
+      message: 'Gagal mendaftarkan user',
       status: false,
     };
     Toast.show({

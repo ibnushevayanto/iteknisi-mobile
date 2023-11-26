@@ -2,17 +2,24 @@ import React, {useState} from 'react';
 import {View, Text} from 'react-native-ui-lib';
 import Button from '../../UI/Button';
 import tailwind from 'twrnc';
-import {Modal, Pressable, TouchableOpacity} from 'react-native';
+import {Modal, TouchableOpacity} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import TextField from '../../Field/TextField';
+import Toast from 'react-native-toast-message';
+import {ubahKataSandiUser} from '../../../utils/user';
+import LoadingOverlay from '../../UI/LoadingOverlay';
 
+const defaultChangePassword = {
+  password_lama: null,
+  password_baru: null,
+  confirm_password: null,
+};
 export default function () {
   const [isVisibleForm, setIsVisibleForm] = useState(false);
-  const [formChangePassword, setFormChangePassword] = useState({
-    password_lama: null,
-    password_baru: null,
-    confirm_password: null,
-  });
+  const [formChangePassword, setFormChangePassword] = useState(
+    defaultChangePassword,
+  );
+  const [isLoading, setIsLoading] = useState(false);
 
   const changeValueForm = (value, key) => {
     const currentForm = {...formChangePassword};
@@ -23,6 +30,7 @@ export default function () {
 
   return (
     <>
+      {isLoading && <LoadingOverlay />}
       <Modal transparent visible={isVisibleForm} animationType="slide">
         <>
           <View
@@ -80,10 +88,46 @@ export default function () {
                 />
               </View>
             </View>
-            <Button bgColor={'#6A5AE0'} textStyle={tailwind`text-white`}>
+            <Button
+              bgColor={'#6A5AE0'}
+              textStyle={tailwind`text-white`}
+              onPress={async () => {
+                if (
+                  !formChangePassword.password_lama &&
+                  !formChangePassword.password_baru &&
+                  !formChangePassword.confirm_password
+                ) {
+                  Toast.show({
+                    type: 'error',
+                    text1: 'Gagal',
+                    text2: 'Mohon cek kembali form anda',
+                  });
+                  return;
+                }
+
+                if (
+                  formChangePassword.password_baru !==
+                  formChangePassword.confirm_password
+                ) {
+                  Toast.show({
+                    type: 'error',
+                    text1: 'Gagal',
+                    text2: 'Password tidak sama dengan konfirmasi password',
+                  });
+                  return;
+                }
+                setIsVisibleForm(false);
+
+                setIsLoading(true);
+                const {status} = await ubahKataSandiUser(formChangePassword);
+                setIsLoading(false);
+
+                setFormChangePassword(defaultChangePassword);
+              }}>
               Kirim
             </Button>
           </View>
+          <Toast />
         </>
       </Modal>
       <Button

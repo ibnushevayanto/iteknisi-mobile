@@ -21,16 +21,6 @@ export default function () {
           tabBarInactiveTintColor: '#0C0B10',
         }}>
         <Bottom.Screen
-          component={profile}
-          name="Profile"
-          options={{
-            tabBarIcon: ({color, size}) => (
-              <Ionicon name="person" color={color} size={size / 1.3} />
-            ),
-            tabBarLabel: 'Profile',
-          }}
-        />
-        <Bottom.Screen
           component={BerandaScreen}
           name="Landing"
           options={{
@@ -58,6 +48,16 @@ export default function () {
               <Ionicon name="call" color={color} size={size / 1.3} />
             ),
             tabBarLabel: 'Kontak',
+          }}
+        />
+        <Bottom.Screen
+          component={profile}
+          name="Profile"
+          options={{
+            tabBarIcon: ({color, size}) => (
+              <Ionicon name="person" color={color} size={size / 1.3} />
+            ),
+            tabBarLabel: 'Profile',
           }}
         />
       </Bottom.Navigator>
