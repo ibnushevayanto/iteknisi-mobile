@@ -28,8 +28,8 @@ const User = require("./models/user");
 const UserAlamat = require("./models/user_alamat");
 const UserGroup = require("./models/usergroup");
 const OrderTransaksi = require("./models/order_transaksi");
-const MasterMerk = require("./models/master_merk");
 const Order = require("./models/orders");
+const OrderUpload = require("./models/order_upload");
 
 UserAlamat.belongsTo(User);
 User.hasMany(UserAlamat);
@@ -40,11 +40,11 @@ UserGroup.hasMany(User);
 OrderTransaksi.belongsTo(User);
 User.hasMany(OrderTransaksi);
 
-Order.belongsTo(MasterMerk);
-MasterMerk.hasMany(Order);
-
 Order.belongsTo(UserAlamat);
 UserAlamat.hasMany(Order);
+
+OrderUpload.belongsTo(Order);
+Order.hasMany(OrderUpload);
 
 // * DB Configuration
 const sequelize = require("./utils/database");

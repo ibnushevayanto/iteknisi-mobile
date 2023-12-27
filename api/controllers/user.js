@@ -289,7 +289,6 @@ exports.ubahKataSandi = async (req, res, next) => {
     const password_baru = req.body.password_baru;
     const dataUser = await User.findByPk(req.user.id);
 
-    console.log(dataUser.password);
     const isPasswordEqual = await bcryptjs.compare(
       password_lama,
       dataUser.password

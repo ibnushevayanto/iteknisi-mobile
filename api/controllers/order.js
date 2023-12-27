@@ -1,5 +1,8 @@
 const sequelize = require("../utils/database");
 const UserAlamat = require("../models/user_alamat");
+const OrderUpload = require("../models/order_upload");
+const { generateUniqueOrderCode } = require("../utils/others");
+const Order = require("../models/orders");
 
 exports.getTeknisiTerdekat = async (req, res, next) => {
   try {
@@ -43,6 +46,52 @@ exports.getTeknisiTerdekat = async (req, res, next) => {
     res.json({
       message: "Berhasil mendaptkan data",
       data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.simpanOrder = async (req, res, next) => {
+  try {
+    const mdltp = req.body.model_tipe;
+    const kategori = req.body.kategori;
+    const pelanggan_id = req.user.id;
+    const teknisi_id = req.body.teknisi_id;
+    const jnslyn = req.body.jenis_layanan;
+    const deskripsi = req.body.deskripsi;
+    const kd_order = generateUniqueOrderCode();
+    const usersAlamatId = req.body.alamat_id;
+
+    const order = await Order.create({
+      mdltp,
+      kategori,
+      pelanggan_id,
+      teknisi_id,
+      jnslyn,
+      deskripsi,
+      kd_order,
+      usersAlamatId,
+    });
+
+    const itemOrderUpload = [];
+    for (const itemFile of req.files) {
+      const resOrderUpload = await OrderUpload.create({
+        orderId: order.id,
+        nama_file: itemFile.filename,
+        size: itemFile.size,
+        mimeType: itemFile.mimetype,
+        path: itemFile.path,
+      });
+      itemOrderUpload.push(resOrderUpload);
+    }
+
+    res.json({
+      message: "Berhasil melakukan order",
+      data: {
+        order,
+        upload: itemOrderUpload,
+      },
     });
   } catch (error) {
     next(error);
